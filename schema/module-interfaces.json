@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bourbaki Engine v2 — module interfaces, object types, and epistemic state machine",
+  "version": "2.0.0",
+  "description": "Machine-readable companion to spec/ARCHITECTURE_V2.md. Interfaces are contracts, not implementations; maturity is stated per module.",
+  "planes": {
+    "discovery": {"virtue": "yield and diversity", "may_be_wrong": true, "authority": "propose"},
+    "trust": {"virtue": "low false-theorem-promotion-rate", "may_be_wrong": false, "authority": "promote"}
+  },
+  "authority_membrane": "one-way: retrieval and discovery propose nodes/edges; only the Trust Plane promotes; the generating role has no write access to the corpus",
+  "modules": {
+    "mirador": {
+      "role": "representation",
+      "maturity": "prototype",
+      "doi": "10.5281/zenodo.21324524",
+      "provides": [
+        "Mathematical Cell = canonical claim + context + dependencies + transformations + artifacts + provenance + epistemic state",
+        "claim identity = hash(statement + context)",
+        "object type orthogonal to epistemic state",
+        "first-class reduction/transformation edges each carrying a soundness obligation",
+        "versioning with semantic diffs",
+        "append-only hash-chained event log with deterministic rebuild",
+        "deterministic invalidation propagation"
+      ],
+      "promotion_authority": false
+    },
+    "proofcontext": {
+      "role": "retrieval",
+      "maturity": "prototype+evaluation",
+      "doi": "10.5281/zenodo.21325288",
+      "input": "ProblemSignature (compiled from a natural-language query)",
+      "output": "EvidenceBundle",
+      "invariants": [
+        "hard typed-compatibility filters reject incompatible candidates regardless of similarity",
+        "authority membrane: rank/annotate, never promote",
+        "version-aware invalidation of indexes and emitted bundles"
+      ],
+      "promotion_authority": false,
+      "measured": {"near_miss_served": "0% vs 44-75% baselines", "dependency_sufficiency": "0.90-0.93 vs 0.40-0.43", "correct_refusal": "1.00 vs 0.00", "benchmark": "MathScopeBench", "scope": "prototype-scale, self-built benchmark"}
+    },
+    "discovery_operators": {
+      "role": "generation",
+      "maturity": "conceptual",
+      "emit_states": ["DRAFT", "CANDIDATE"],
+      "forbidden_emit_state": "PROMOTED",
+      "operators": ["SPECIALIZE", "GENERALIZE", "COUNTEREXAMPLE_FIRST", "NEGATE_AND_SEARCH", "DUALIZE", "CHANGE_REPRESENTATION", "TRANSFER", "MINIMAL_MISSING_LEMMA", "EXTREMALIZE", "STABILITY", "BARRIER_SEARCH", "FORMALIZE_EARLY", "SYNTHESIZE_DEFINITION"],
+      "operator_contract_fields": ["admissible_input", "precondition", "produced_object_type", "initial_state", "required_retrieval_context", "validation_obligation", "predictable_failure"]
+    },
+    "formalization_certified_computation": {
+      "role": "verification",
+      "maturity": "conceptual; one certified instance (812651-leaf certificate + independent checker)",
+      "pipeline": ["informal", "MIRADOR_IR", "formal_declaration", "proof_state", "kernel_feedback", "localized_repair"],
+      "output_labels": ["heuristic", "evidence", "certificate", "proof"],
+      "correspondence_rule": "statement-formalization correspondence is a separate asserted claim, audited, never inferred from a kernel check"
+    },
+    "congress": {
+      "role": "promotion",
+      "maturity": "manually_exercised",
+      "roles": ["Stratege", "Scribe", "Experimentateur", "Bibliothecaire", "Refutateurs", "Auditeur", "Greffier"],
+      "promotion_rule": "unanimity",
+      "veto_object": ["target", "concrete_objection", "affected_dependency_paths", "discharge_condition"],
+      "lenses": ["local_correctness", "informal_formal_correspondence", "novelty_priority", "retrieval_provenance", "assumption_scope", "checker_independence", "integration_invalidation"]
+    },
+    "scheduler": {
+      "role": "resource_allocation",
+      "maturity": "conceptual",
+      "levels": ["tactical_obligations", "research_programs", "meta_program"],
+      "score_is_truth": false,
+      "hard_rules": ["time_boxing", "retreat_rule", "milestone_insurance"]
+    }
+  },
+  "object_types": ["DEFINITION", "QUESTION", "CONJECTURE", "CLAIM", "REDUCTION", "EQUIVALENCE", "EXAMPLE", "COUNTEREXAMPLE", "BARRIER", "EXPERIMENT", "CERTIFICATE", "CHECKER", "HEURISTIC", "TRANSLATION", "PROGRAM"],
+  "epistemic_states": ["DRAFT", "OPEN", "EVIDENCE", "CANDIDATE", "REFUTED", "NO_GO", "FORMALIZED", "AUDITED", "PROMOTED", "SUSPECT", "RETIRED"],
+  "transitions": [
+    {"from": null, "event": "proposed", "to": "DRAFT"},
+    {"from": "DRAFT", "event": "posed_to_frontier", "to": "OPEN"},
+    {"from": "OPEN", "event": "evidence-added", "to": "EVIDENCE"},
+    {"from": "OPEN|EVIDENCE", "event": "operator_or_scribe_output", "to": "CANDIDATE"},
+    {"from": "CANDIDATE", "event": "kernel_check+correspondence_asserted", "to": "FORMALIZED"},
+    {"from": "FORMALIZED", "event": "congress_lenses_discharged", "to": "AUDITED"},
+    {"from": "AUDITED", "event": "unanimous_promotion", "to": "PROMOTED"},
+    {"from": "any", "event": "counterexample", "to": "REFUTED"},
+    {"from": "OPEN_route", "event": "impossibility_proved", "to": "NO_GO"},
+    {"from": "PROMOTED", "event": "dependency_refuted_or_definition_revised", "to": "SUSPECT", "automatic": true},
+    {"from": "SUSPECT", "event": "re-audit", "to": "PROMOTED|REFUTED"},
+    {"from": "any_version", "event": "superseded", "to": "RETIRED"}
+  ],
+  "orthogonality_rule": "object type is fixed at creation; epistemic state changes only via logged events; the two axes are independent (a CONJECTURE may be PROMOTED as a conjecture; a CLAIM labelled 'Theorem' may sit at DRAFT)",
+  "graph_audits": ["acyclicity_of_justification", "definition_proof_consistency", "edge_soundness_before_promotion"],
+  "primary_metric": "False Theorem Promotion Rate",
+  "metric_families": {
+    "discovery": ["useful_candidate_rate", "time_to_counterexample", "novel_result_yield", "program_diversity", "reduction_depth", "theory_compression", "barrier_discovery", "cross_campaign_reuse"],
+    "retrieval_representation": ["assumption_compatible_precision", "evidence_bundle_completeness", "definition_version_accuracy", "dependency_path_recall", "stale_claim_serving_rate", "informal_formal_alignment"],
+    "trust": ["false_theorem_promotion_rate", "defect_detection_rate", "defect_escape_rate", "false_rejection_rate", "node_vs_edge_error_share", "independent_reproduction_rate", "formalization_coverage", "reaudit_latency", "cost_per_promoted_claim"]
+  }
+}

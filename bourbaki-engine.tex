@@ -1,0 +1,1226 @@
+\documentclass[11pt]{amsart}
+%==============================================================
+%  The Bourbaki Engine: a governed discovery architecture for
+%  long-horizon autonomous mathematics.
+%
+%  v2 (discovery reorientation). Integrates the MIRADOR
+%  representational substrate and the ProofContext retrieval
+%  substrate as bounded modules, under a two-plane
+%  (Discovery / Trust) architecture. Companion to the plank
+%  pilot (bang-plank-affine-triangle repository).
+%==============================================================
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage[margin=1in]{geometry}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{manfnt} % \dbend --- the Bourbaki/Knuth dangerous-bend glyph
+\emergencystretch=1.5em
+
+\theoremstyle{definition}
+\newtheorem{principle}{Principle}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{contract}{Contract}[section]
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\engine}{\textsc{Bourbaki Engine}}
+\newcommand{\mirador}{\textsc{Mirador}}
+\newcommand{\pc}{\textsc{ProofContext}}
+\newcommand{\state}[1]{\texttt{[#1]}}
+\newcommand{\otype}[1]{\textsc{#1}}
+\newcommand{\op}[1]{\texttt{#1}}
+\newcommand{\yes}{$\bullet$}
+\newcommand{\pt}{$\circ$}
+\newcommand{\no}{--}
+
+\title[The Bourbaki Engine]{The Bourbaki Engine: A Governed Discovery
+Architecture\\ for Long-Horizon Autonomous Mathematics}
+\author{Maximiliano Lucius}
+\address{Instituto Tecnol\'ogico de Buenos Aires, CABA, Argentina}
+\email{maximiliano.lucius@tutamail.com}
+\author{Jos\'e Minich}
+\address{Instituto Tecnol\'ogico de Buenos Aires, C\'ordoba, Argentina}
+\email{jminich@gmail.com}
+\date{Draft --- \today}
+
+\begin{document}
+
+\begin{abstract}
+Autonomous systems increasingly generate plausible research-level mathematics.
+A prior architecture, the \engine{}, took the \emph{admission} problem as its
+object: under what protocol should a generated claim be allowed to become a
+load-bearing dependency of future work? That question is necessary but not
+sufficient for \emph{discovery}: governing accumulation says nothing about how
+new structure is produced over a research program that outlives any single
+context. This paper reorganizes the engine around a dual thesis: reliable
+autonomous mathematics requires two coupled but \emph{institutionally separated}
+systems --- a \emph{Discovery Plane} that expands the space of mathematical
+possibilities (and may be exploratory, redundant, speculative, and internally
+contradictory) and a \emph{Trust Plane} that governs which outputs may become
+reusable knowledge (and must remain conservative, auditable, and controlled by a
+small explicit trusted computing base). We preserve and strengthen the original
+contribution --- claim promotion as the unit of trusted progress, edge-level
+soundness obligations, an epistemic separation of powers, fresh-context
+independence as a falsifiable hypothesis, certificate discipline
+(search~$\neq$~evidence~$\neq$~certificate~$\neq$~checker), an event-sourced
+knowledge substrate, dependency-driven invalidation to a \state{SUSPECT} state,
+and the False Theorem Promotion Rate as the primary trust metric. Around it we
+specify seven modules with explicit interfaces (two stated as formal contracts),
+two of which are implemented and separately published as companion preprints
+(not yet peer-reviewed): \mirador{}, a typed, versioned representational
+substrate whose unit is a Mathematical Cell (prototype and case study), and
+\pc{}, a dependency-aware retrieval substrate returning verifiable Evidence
+Bundles rather than similar text (prototype with controlled evaluation). The
+remaining modules --- a Discovery Plane of machine-actionable operators, a
+formalization plane, a certified computational laboratory, an enlarged
+adversarial Congress, and a hierarchical research scheduler --- are specified at
+explicitly labeled maturity levels. We replace the goal graph with a typed
+research hypergraph in which object type is orthogonal to epistemic state, recast
+the sixteen-round Bang affine plank campaign as a retrospective vertical slice
+(requirements elicitation, not validation of unimplemented components), and
+replace ambition-by-assertion with a gated readiness ladder (R0--R9) and a
+three-track program. The engine does not promise to solve a Millennium Prize
+Problem; a Millennium problem is a gated frontier stress test whose success
+cannot be self-declared. The reusable asset is horizontal: a
+verified-reasoning infrastructure applicable wherever claims are cheap to
+generate and expensive to trust.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+
+Mathematics has always scaled by dividing labour under a shared standard of
+rigor. Hilbert's 1900 address turned open problems into public
+milestones~\cite{Hilbert1900}; P\'olya systematized the heuristics of attack
+\cite{Polya45}; Lakatos showed that proofs grow by surviving
+refutations~\cite{Lakatos76}; and the Polymath experiments demonstrated that
+loosely coordinated crowds can close serious theorems when the work is cut into
+visible, checkable pieces~\cite{GowersNielsen09,Polymath12}. The most successful
+sustained instance of industrialized rigor remains the Bourbaki collective:
+many mathematicians, one identity, drafts destroyed and rewritten under
+adversarial assembly until unanimity, and a cumulative corpus --- the
+\emph{\'El\'ements} --- in which every statement rests on what came
+before~\cite{Bourbaki,Mashaal06,Corry92,Weil92,Beaulieu93}.
+
+Large-language-model agents now produce competent mathematical text, search
+literature, write exact-arithmetic experiments, and drive proof
+assistants~\cite{Yao23,Trinh24,RomeraParedes24,Davies21}. As generation
+improves, two binding constraints appear, and they are different problems. The
+first is \emph{admission}: deciding under what protocol a generated argument may
+become a load-bearing dependency. The prior version of this
+architecture~\cite{Lucius26} answered exactly that, and its answer stands: the
+unit of progress is not a generated proof but a claim that survives a governed
+promotion process. The second constraint is \emph{discovery}: producing new
+mathematical structure --- definitions, reductions, barriers, conjectures,
+proofs --- across a research program that spans many contexts and many months.
+Governing accumulation, by itself, does not generate structure. A machine that
+only prevents false promotions can sit forever at an empty frontier.
+
+\begin{principle}[dual thesis]\label{pr:dual}
+Reliable autonomous mathematics requires two coupled but institutionally
+separated systems: a \emph{Discovery Plane} that expands the space of
+mathematical possibilities, and a \emph{Trust Plane} that governs which outputs
+may become reusable knowledge. The Discovery Plane may be exploratory,
+redundant, speculative, and internally contradictory; the Trust Plane must
+remain conservative, auditable, and controlled by a small explicit trusted
+computing base. Neither may hold the other's authority.
+\end{principle}
+
+This reframes the platform without weakening its original spine. The Trust Plane
+\emph{is} the claim-promotion architecture, unchanged in its guarantees and
+still model-agnostic about how candidates are produced. What is new is that the
+platform now also specifies the machinery of discovery --- representation,
+retrieval, generation operators, formalization, and certified computation ---
+and the interfaces by which their outputs enter the promotion boundary. Two of
+those modules are not proposals but implemented, separately published companion
+substrates: the \mirador{} representational layer~\cite{lucius2026mirador} and
+the \pc{} retrieval layer~\cite{lucius2026proofcontext}. The rest are specified
+at maturity levels we mark explicitly (\S\ref{sec:scope}), because the failure
+this paper most wants to avoid is describing unbuilt machinery in a way that
+reads as built.
+
+The remaining sections state scope and contribution with maturity
+(\S\ref{sec:scope}); locate the work against related systems by capability and
+authority (\S\ref{sec:related}); specify the two-plane architecture and its
+closed loop (\S\ref{sec:planes}); define the campaign constitution
+(\S\ref{sec:constitution}), the \mirador{} substrate and the typed research
+hypergraph (\S\ref{sec:mirador}), the \pc{} substrate and Evidence Bundles
+(\S\ref{sec:proofcontext}), the Discovery Plane operators (\S\ref{sec:discovery}),
+formalization and certified computation (\S\ref{sec:formal}), the enlarged
+Congress (\S\ref{sec:congress}), and the hierarchical scheduler
+(\S\ref{sec:scheduler}); persist all of it in an event-sourced substrate with
+invalidation (\S\ref{sec:substrate}); encode the Bang pilot retrospectively
+(\S\ref{sec:pilot}); replace the old validation plan with a readiness ladder and
+three-track program (\S\ref{sec:validation}) and a gated Millennium stress test
+(\S\ref{sec:millennium}); and state threats and limitations
+(\S\ref{sec:threats}).
+
+\section{Scientific scope and contribution}\label{sec:scope}
+
+The revised paper answers a broader question than its predecessor:
+\begin{quote}
+How can autonomous systems generate, retrieve, test, formalize, adversarially
+review, and cumulatively promote mathematical progress over long-horizon
+research programs without allowing errors to become load-bearing knowledge?
+\end{quote}
+This is an architecture and research-program paper grounded in a
+requirements-elicitation pilot, with falsifiable evaluation protocols and
+explicitly separated implemented, manually exercised, specified, and aspirational
+components. The contributions are:
+
+\begin{enumerate}
+\item[\textbf{(A)}] \textbf{The two-plane thesis} (\S\ref{sec:planes}):
+discovery and trust as separated authorities, with a model-agnostic promotion
+boundary between them.
+\item[\textbf{(B)}] \textbf{Edge-level soundness obligations and a typed research
+hypergraph} (\S\ref{sec:mirador}): a reduction or transformation
+``$A$ follows from $B_1,\dots,B_k$'' is itself an auditable claim, and object
+type (what a node \emph{is}) is orthogonal to epistemic state (how far it has
+\emph{survived}).
+\item[\textbf{(C)}] \textbf{Two implemented substrates with bounded contracts}:
+\mirador{}~\cite{lucius2026mirador} for representation and
+\pc{}~\cite{lucius2026proofcontext} for retrieval, stated as interfaces rather than
+reproduced in full.
+\item[\textbf{(D)}] \textbf{A Discovery Plane of machine-actionable operators}
+(\S\ref{sec:discovery}), each with preconditions, produced cell type, initial
+state, required retrieval context, validation obligation, and predictable
+failure mode.
+\item[\textbf{(E)}] \textbf{An epistemic separation of powers and an enlarged
+adversarial Congress} (\S\ref{sec:congress}): generation, promotion, and
+certification are never vested in one agent; fresh-context independence is a
+falsifiable hypothesis, not an intuition.
+\item[\textbf{(F)}] \textbf{Certificate discipline as a distinct trust layer}
+(\S\ref{sec:formal}): search~$\neq$~evidence~$\neq$~certificate~$\neq$~checker,
+with a small explicit trusted computing base and an independent
+statement--formalization correspondence audit.
+\item[\textbf{(G)}] \textbf{A gated evaluation program} (\S\ref{sec:validation},
+\S\ref{sec:millennium}): the primary metric is the False Theorem Promotion Rate;
+progress toward frontier problems is gated by a readiness ladder that the engine
+cannot self-declare complete.
+\end{enumerate}
+
+\noindent The discipline these contributions demand of \emph{us} is a maturity
+ledger. Every mechanism occupies exactly the column its evidence supports;
+future-tense architecture is never written as if implemented.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.30\textwidth}ccccc@{}}
+\caption{Maturity ledger. C = conceptual/specified; M = manually exercised
+(human-orchestrated pilot); P = prototype implemented; E = controlled
+evaluation; X = external validation. The highest supported level is marked.}
+\label{tab:maturity}\\
+\toprule
+\textbf{Mechanism} & \textbf{C} & \textbf{M} & \textbf{P} & \textbf{E} &
+\textbf{X}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mechanism} & \textbf{C} & \textbf{M} & \textbf{P} & \textbf{E} &
+\textbf{X}\\ \midrule
+\endhead
+\mirador{} representation~\cite{lucius2026mirador} & & & \yes & & \\
+\pc{} retrieval~\cite{lucius2026proofcontext} & & & & \yes & \\
+Event log, hash-chaining, invalidation (in \mirador{}) & & & \yes & & \\
+Claim promotion / separation of powers & & \yes & & & \\
+Adversarial Congress (fresh-context review) & & \yes & & & \\
+Certified computation (one instance: $812{,}651$-leaf certificate + checker) & &
+\yes & & & \\
+Discovery Plane operators & \yes & & & & \\
+Formalization plane (Lean/\texttt{mathlib} backend) & \yes & & & & \\
+Hierarchical research scheduler & \yes & & & & \\
+Campaign constitution & \yes & & & & \\
+Millennium-scale campaign & \yes & & & & \\
+\bottomrule
+\end{longtable}
+}
+
+\noindent No row is marked \textbf{X}: nothing here has yet survived external
+peer review as a system, and the Bang manuscript is not yet journal-accepted.
+The engine cannot promote itself to that column (\S\ref{sec:validation}).
+
+\section{Related work}\label{sec:related}
+
+We locate the engine not by capability alone but by \emph{who holds which
+authority}. Systems that ``do mathematics'' can be separated by whether they
+generate, retrieve, formalize, certify, persist across campaigns, govern
+promotion, invalidate dependencies, and build theory. Table~\ref{tab:matrix}
+records this; every 2026 entry was verified against its primary source (access date 2026-07-12; the coding table is
+supplementary material), and no capability coding is inferred
+from an abstract. In particular the certification column separates
+kernel-certified provers from LLM-verifier self-checking, which is not
+certification.
+
+{\scriptsize
+\begin{longtable}{@{}p{0.24\textwidth}cccccccc@{}}
+\caption{Capability-and-authority matrix. \yes~= provided; \pt~= partial or
+scoped; \no~= not provided. Columns: \textbf{Gen}erate, \textbf{Retr}ieve,
+\textbf{Form}alize, \textbf{Cert}ify, \textbf{Pers}ist across campaigns,
+\textbf{Gov}ern promotion, \textbf{Inv}alidate dependencies, build
+\textbf{Theory}. For the \engine{} and its substrates, a cell denotes capability
+the architecture \emph{specifies} (cf.\ the maturity ledger,
+Table~\ref{tab:maturity}); a \yes{} appears only where a substrate implements it
+--- retrieval via \pc{}, invalidation via \mirador{} --- and manual or conceptual
+capabilities are marked \pt{} at most, never at parity with a shipping system.}
+\label{tab:matrix}\\
+\toprule
+\textbf{System} & Gen & Retr & Form & Cert & Pers & Gov & Inv & Theory\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{System} & Gen & Retr & Form & Cert & Pers & Gov & Inv & Theory\\ \midrule
+\endhead
+Aletheia~\cite{Aletheia26} & \yes & \yes & \no & \no & \no & \no & \no & \no\\
+QED~\cite{QED26} & \yes & \pt & \no & \no & \no & \pt & \pt & \no\\
+RMA~\cite{RMA26} & \yes & \yes & \no & \no & \pt & \pt & \no & \no\\
+Prover Agent~\cite{ProverAgent25} & \yes & \no & \yes & \yes & \no & \no & \no & \no\\
+LEAP~\cite{LEAP26} & \yes & \no & \yes & \yes & \no & \no & \no & \no\\
+FunSearch~\cite{RomeraParedes24} & \yes & \no & \no & \pt & \pt & \pt & \no & \no\\
+AlphaEvolve~\cite{AlphaEvolve25} & \yes & \no & \no & \pt & \yes & \yes & \no & \no\\
+Lean \texttt{mathlib}~\cite{mathlib20} & \no & \pt & \yes & \yes & \yes & \pt & \pt & \yes\\
+iCoq~\cite{Celik17} & \no & \no & \yes & \yes & \yes & \no & \yes & \no\\
+\texttt{leanblueprint}~\cite{Massot,Tao23} & \no & \no & \pt & \pt & \yes & \no & \pt & \pt\\
+LeanSearch\,v2~\cite{LeanSearch26} & \pt & \yes & \no & \no & \no & \no & \no & \no\\
+TheoremGraph~\cite{TheoremGraph26} & \pt & \yes & \no & \no & \pt & \no & \no & \pt\\
+MaRDI~\cite{MaRDI23} & \no & \yes & \no & \no & \yes & \pt & \no & \pt\\
+Zep/Graphiti~\cite{Zep25} & \no & \yes & \no & \no & \yes & \no & \pt & \no\\
+\midrule
+\mirador{}~\cite{lucius2026mirador} & \no & \pt & \pt & \no & \yes & \no & \yes & \no\\
+\pc{}~\cite{lucius2026proofcontext} & \no & \yes & \no & \no & \pt & \no & \yes & \no\\
+\engine{} (this paper) & \pt & \yes & \pt & \pt & \pt & \pt & \yes & \pt\\
+\bottomrule
+\end{longtable}
+}
+
+\noindent Three points survive this matrix. First, the recent autonomous
+systems~\cite{Aletheia26,QED26,RMA26} primarily optimize the probability of
+\emph{finding} a correct result; none maintains a governed cross-campaign
+corpus. (Notably, QED enforces that its prover and verifiers share no context ---
+an independent adoption of the separation this paper argues for.) Second, the
+formal-methods lineage --- \texttt{mathlib}~\cite{mathlib20},
+iCoq~\cite{Celik17}, \texttt{leanblueprint}~\cite{Massot,Tao23} --- supplies
+persistence, certification, and dependency tracking, but inside a single
+always-consistent type-checked environment that a corpus of possibly-refuted,
+semi-formal claims cannot assume. Third, the knowledge-graph and agent-memory
+systems~\cite{TheoremGraph26,MaRDI23,Zep25,Yadav26} persist and retrieve
+structure but hold \emph{no} epistemic authority and do not govern promotion.
+The engine's delta is the composition: it governs promotion \emph{and} builds
+on a representation (\mirador{}) and retrieval (\pc{}) that carry epistemic
+state and invalidate on it. Coding each entry from its primary source confirms
+this gap is systemic: of the systems in Table~\ref{tab:matrix}, none carries a live
+epistemic state (\state{OPEN}/\state{PROMOTED}/\state{REFUTED}) \emph{together
+with} retrieval that hard-rejects an incompatible-but-similar match. Machine
+proof search --- from the Logic Theory
+Machine~\cite{NewellSimon57} and AND/OR search~\cite{Nilsson71} through proof
+planning~\cite{Bundy88} to McCune's Robbins solution~\cite{McCune97} --- supplies
+the AND--OR skeleton the hypergraph generalizes; the computer-assisted
+lineage~\cite{AppelHaken77,Gonthier08,Hales17,Heule16,deBruijn70} fixes the
+certificate standard of \S\ref{sec:formal}.
+
+\section{The two-plane architecture}\label{sec:planes}
+
+The engine is defined by a boundary, not by its agents. Candidate mathematical
+objects are produced on one side and admitted, if at all, on the other. The
+original single boundary --- ``candidate $\to$ evidence $\to$ promotion $\to$
+corpus'' --- is now embedded in a closed loop:
+\[
+\begin{gathered}
+\underbrace{\text{corpus}}_{\text{\'El\'ements}}
+\to
+\underbrace{\pc{}}_{\text{retrieval}}
+\to
+\underbrace{\text{Discovery Plane}}_{\text{operators}}
+\to
+\text{candidates}\\
+\to
+\underbrace{\text{formalize}+\text{certify}}_{}
+\to
+\boxed{\text{Trust Plane / Congress}}
+\to
+\text{corpus}\to\cdots
+\end{gathered}
+\]
+Everything up to the box is Discovery; the box and the corpus behind it are
+Trust. The membrane between them is one-way in authority: Discovery and
+retrieval may \emph{propose} nodes and edges; only the Trust Plane may
+\emph{promote}.
+
+\begin{principle}[governance, not generation, at the boundary]\label{pr:governs}
+The Trust Plane does not define how claims must be generated. It defines the
+conditions under which claims may become load-bearing dependencies. Any
+generator --- an end-to-end research system, a role-specialized solver, a single
+proof model --- is a candidate source with respect to the boundary.
+\end{principle}
+
+What changes from the predecessor is that ``the engine does not define how claims
+are generated'' is now true only \emph{of the Trust Plane}, not of the whole
+platform. The integrated engine specifies the interfaces and governance of
+discovery --- what a candidate is, where it is retrieved from, which operators
+produce it, how it is formalized and certified --- without mandating a single
+generation algorithm. The two planes have opposite virtues by design: the
+Discovery Plane is judged by yield and diversity and is allowed to be wrong; the
+Trust Plane is judged by its False Theorem Promotion Rate and is allowed to be
+slow. Collapsing them --- letting a generator certify its own output --- is the
+precise failure the architecture exists to prevent.
+
+\section{The campaign constitution}\label{sec:constitution}
+
+Before any graph expansion, a campaign is \emph{constituted}: a frozen,
+hash-pinned document that fixes the rules of the game so that neither a
+generating agent nor an over-eager scheduler can quietly move them after seeing
+results. The constitution freezes: the exact target and admissible variants;
+definitions and conventions; assumptions and excluded regimes; \emph{what counts
+as a solution}; allowed foundational backends and axioms; certification
+requirements by claim type; the novelty and attribution policy; evaluation
+metrics; compute and human-review budget; stop, retreat, and publication
+conditions; and the minimum useful deliverables.
+
+\begin{principle}[solution is defined outside the engine]\label{pr:solution}
+For a hard target --- above all a Millennium problem --- ``solution'' cannot be
+defined by an internal agent verdict. The constitution must name the external
+process (journal acceptance, recognized community validation) that alone can
+close the top of the readiness ladder (\S\ref{sec:validation}).
+\end{principle}
+
+The constitution is the object that makes the pilot's costliest lesson
+un-repeatable by construction: a target stated as the unrestricted constant $C$
+but attacked for the one-plank-per-direction constant $C^{111}$ is a
+constitution violation detectable before a single proof is written
+(\S\ref{sec:pilot}).
+
+\section{\mirador{}: representation and the typed research hypergraph}\label{sec:mirador}
+
+The substrate over which everything is stored is \mirador{}, a typed, versioned
+Mathematical Intermediate Representation whose unit is a \emph{Mathematical
+Cell}~\cite{lucius2026mirador}. The engine depends only on its interface, not on
+its internals; \mirador{} is a separately published prototype with an executable
+schema, a dependency-free reference implementation, twenty-eight deterministic
+invariant tests, and a thirteen-cell case study on the Bang problem.
+
+\begin{contract}[\mirador{} interface]\label{con:mirador}
+The representation must provide: \emph{Mathematical Cells} binding a canonical
+claim to its explicit context; \emph{object type orthogonal to epistemic state};
+\emph{typed dependency and transformation edges} as first-class objects, each
+carrying its own soundness obligation; \emph{versioning with semantic diffs};
+claim identity as the canonical hash of a statement \emph{and its context}
+(assumptions and scope participate in identity); and links between natural
+language, computation, and proof-assistant declarations that are recorded, never
+inferred from compilation.
+\end{contract}
+
+The engine's goal graph is generalized, in the design, to a \emph{typed research
+hypergraph} over these cells. Two orthogonal axes classify every node.
+
+\paragraph{Object type (what a node is).}
+\otype{DEFINITION}, \otype{QUESTION}, \otype{CONJECTURE}, \otype{CLAIM},
+\otype{REDUCTION}, \otype{EQUIVALENCE}, \otype{EXAMPLE}, \otype{COUNTEREXAMPLE},
+\otype{BARRIER}, \otype{EXPERIMENT}, \otype{CERTIFICATE}, \otype{CHECKER},
+\otype{HEURISTIC}, \otype{TRANSLATION}, \otype{PROGRAM}.
+
+\paragraph{Epistemic state (how far it has survived).}
+\state{DRAFT}, \state{OPEN}, \state{EVIDENCE}, \state{CANDIDATE},
+\state{REFUTED}, \state{NO\_GO}, \state{FORMALIZED}, \state{AUDITED},
+\state{PROMOTED}, \state{SUSPECT}, \state{RETIRED}.
+
+\begin{principle}[type is not status]\label{pr:orthogonal}
+An object typed \otype{CLAIM} and labelled ``Theorem'' in prose is not thereby
+\state{PROMOTED}. The literary label names the \emph{intent}; the epistemic
+state names the \emph{evidence}. Conflating them is the mechanism by which a
+plausible draft is cited as a theorem, and the hypergraph forbids it by keeping
+the axes separate.
+\end{principle}
+
+The inverse AND--OR proof structure of the predecessor is retained as one
+important \emph{subgraph}: a \otype{REDUCTION} node with an AND-set of premises
+is exactly an AND-node, and alternative reductions to the same goal are an
+OR-node. But the hypergraph also represents questions, definitions, experiments,
+barriers, equivalences, translations, and entire research programs that the pure
+proof tree could not. Every \otype{REDUCTION}, \otype{EQUIVALENCE}, and
+\otype{TRANSLATION} edge carries an auditable soundness obligation, checked
+separately from the nodes it joins --- the boundary at which the pilot's most
+expensive defect actually lived (\S\ref{sec:pilot}). Two standing graph audits
+are specified: \emph{acyclicity of justification} (no node reachable from its own proof
+obligations) and \emph{definition--proof consistency} (the object named in a
+statement is byte-identical, by hash, with the object manipulated in its proof).
+
+\section{\pc{}: dependency-aware retrieval and Evidence Bundles}\label{sec:proofcontext}
+
+Discovery and proof both begin by asking the corpus what is already known. In
+mathematics, similarity is unsafe: two statements can be nearly identical in
+wording yet differ in a quantifier, a dimension, a symmetry assumption, a
+normalization, a definition version, or an epistemic status. \pc{} is a
+dependency-aware retriever, layered on \mirador{}, that returns not the most
+similar passage but the smallest context in which a claim can be
+\emph{safely used}~\cite{lucius2026proofcontext}. It is a separately published
+prototype with a controlled evaluation.
+
+\begin{contract}[\pc{} interface]\label{con:pc}
+Given a \emph{Problem Signature} compiled from a natural-language query,
+retrieval returns a typed, hashed \emph{Evidence Bundle}: definitions,
+assumptions, and exclusions; relevant claims at exact versions; dependency
+paths; proofs, certificates, and formal declarations; counterexamples and
+barriers; a provenance manifest; and epistemic states with warnings. Retrieval
+may propose candidate cells and edges and may rank and annotate them; it holds
+\emph{no promotion authority} (the authority membrane). Filters that reject a
+candidate incompatible on a typed axis do so regardless of its similarity score,
+and both indexes and emitted bundles are invalidated version-aware.
+\end{contract}
+
+On \textsc{MathScopeBench}, an adversarial benchmark of mathematical near-misses,
+\pc{} serves $0\%$ of incompatible near-matches against $44$--$75\%$ for lexical,
+dense, hybrid, and hybrid-without-filters retrieval, at equal or higher recall;
+the advantage disappears exactly when the hard filters are removed, isolating
+them as the cause. On downstream proxies, dependency sufficiency rises to
+$0.90$--$0.93$ (from $0.40$--$0.43$ for a flat hybrid) and correct refusal to
+$1.00$ (from $0.00$). These are prototype-scale numbers on a self-built
+benchmark whose near-miss categories were authored alongside the very filters
+they reward: the ablation isolates causal attribution but not this
+construct-validity risk, so a held-out or third-party benchmark is required
+before R1 is treated as robust. We mark them as such (Table~\ref{tab:maturity});
+they establish retrieval readiness (R1, \S\ref{sec:validation}), not the engine.
+
+\section{The Discovery Plane}\label{sec:discovery}
+
+The Discovery Plane is a library of machine-actionable \emph{operators} that
+take retrieved Evidence Bundles and emit new \mirador{} cells in an initial
+epistemic state. Operators are the specified, not-yet-implemented heart of the
+generative side (Table~\ref{tab:maturity}); the contribution here is the
+\emph{contract}, which forces every operator to declare what would make its
+output wrong.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.20\textwidth}p{0.30\textwidth}p{0.40\textwidth}@{}}
+\caption{Discovery operators (excerpt). Each declares admissible input,
+produced cell type and initial state, and the validation obligation that its
+output must later discharge at the Congress. All emit in \state{DRAFT} or
+\state{CANDIDATE}; none may emit \state{PROMOTED}. The full six-field per-operator
+contract (adding precondition and required retrieval context) is in the
+supplementary specification.}\label{tab:ops}\\
+\toprule
+\textbf{Operator} & \textbf{Produces} & \textbf{Validation obligation /
+predictable failure}\\ \midrule
+\endfirsthead
+\toprule
+\textbf{Operator} & \textbf{Produces} & \textbf{Validation obligation /
+predictable failure}\\ \midrule
+\endhead
+\op{SPECIALIZE} & a \otype{CLAIM}/\otype{EXAMPLE} in a restricted regime &
+soundness of the restriction edge; failure: a true special case marketed as the
+general one.\\
+\op{GENERALIZE} & a \otype{CONJECTURE} over a wider class & a counterexample
+search must be scheduled; failure: over-generalization past a hidden barrier.\\
+\op{COUNTEREXAMPLE\_FIRST} & a \otype{COUNTEREXAMPLE} or its absence as
+\state{EVIDENCE} & exact-arithmetic reproduction; failure: numeric near-miss
+mistaken for a counterexample.\\
+\op{NEGATE\_AND\_SEARCH} & a \otype{BARRIER} node (state \state{NO\_GO}) &
+the impossibility must be proved, not merely unfound; failure: absence of
+evidence read as evidence of absence.\\
+\op{DUALIZE} & an \otype{EQUIVALENCE} to a dual formulation & the duality edge's
+soundness; failure: a lossy dual asserted as exact.\\
+\op{CHANGE\_REPRESENTATION} & a \otype{TRANSLATION} cell & statement--translation
+correspondence audit; failure: a weaker statement encoded than intended.\\
+\op{TRANSFER} & a \otype{CLAIM} imported by analogy from another domain &
+the analogy is a \state{DRAFT} until its edge is discharged; failure: false
+transfer across a disanalogy.\\
+\op{MINIMAL\_MISSING\_LEMMA} & a \otype{CLAIM} whose proof would close a goal &
+acyclicity audit; failure: assuming the conclusion.\\
+\op{EXTREMALIZE} / \op{STABILITY} & an \otype{EXPERIMENT} probing extremal or
+perturbed cases & labelled \state{EVIDENCE}, never proof; failure: a grid
+mistaken for a theorem.\\
+\op{BARRIER\_SEARCH} & a \otype{BARRIER} capping a method family & sharpness must
+be proved; failure: a soft obstruction sold as a hard one.\\
+\op{FORMALIZE\_EARLY} & a \otype{TRANSLATION} to a proof assistant & kernel check
+plus correspondence audit; failure: green kernel, wrong theorem.\\
+\op{SYNTHESIZE\_DEFINITION} & a \otype{DEFINITION} cell (new version) & triggers
+definition--proof re-audit of dependents; failure: definition drift.\\
+\bottomrule
+\end{longtable}
+}
+
+\begin{principle}[candidate generation is not novelty]\label{pr:novelty}
+An operator produces a \emph{candidate}, not a discovery. Genuine mathematical
+novelty is adjudicated downstream, by a novelty-and-priority audit against the
+literature (\S\ref{sec:congress}) and by promotion. Superficial novelty by
+renaming is a threat the architecture must detect (\S\ref{sec:threats}), not a
+success the Discovery Plane may claim.
+\end{principle}
+
+Two loops drive the operators. The \emph{deductive loop} takes an \state{OPEN}
+claim, retrieves its Evidence Bundle, proposes a reduction or proof plan,
+generates obligations, searches for counterexamples, formalizes or proves,
+submits to the Congress, and receives promotion or a repair order. The
+\emph{experimental loop} takes a mathematical family, generates exact instances,
+computes or searches, detects structure, synthesizes a conjecture or definition,
+attacks it with counterexamples, and extracts a certificate or a proof
+obligation before the same Congress. Every product of either loop enters the
+event log as typed events and cells.
+
+\section{Formalization and certified computation}\label{sec:formal}
+
+On the verification axis the engine claims no novelty: it places itself in the
+Flyspeck / SAT-proof / Lean-\texttt{mathlib} lineage of computer-assisted
+mathematics~\cite{Hales17,Heule16,Gonthier08,mathlib20} and treats that
+lineage's rules as non-negotiable. What it adds is to make verification a
+distinct trust layer with a small explicit trusted computing base (TCB), and to
+audit two correspondences the lineage usually leaves implicit.
+
+\paragraph{Certified computation.}
+The admission policy requires computation to enter the corpus only in Flyspeck
+form: the machine-dependent step
+is isolated in a single finite lemma with a \emph{static} certificate (e.g.\ a
+branch-and-bound tree whose every leaf is discharged by a sound predicate),
+verified by an \emph{independent} checker (no shared code with the search,
+standard library only, exact rational arithmetic), with mutation tests
+establishing the checker's non-vacuity and full hashes shipped with the artifact.
+\begin{principle}[discard the discoverer]\label{pr:discard}
+Trust in a computational result rests on the certificate and its independent
+checker alone. The search, its heuristics, and its transcript may be discarded
+in full without affecting verifiability:
+search~$\neq$~evidence~$\neq$~certificate~$\neq$~checker. Every laboratory
+output is labelled \emph{heuristic}, \emph{evidence}, \emph{certificate}, or
+\emph{proof}, and the label is load-bearing.
+\end{principle}
+The pilot's flagship instance is an $812{,}651$-leaf exact-rational certificate
+for a sharp one-plank-per-direction covering constant, verified by a one-page
+independent checker; four hand-proved soundness lemmas and one machine-checked
+emptiness fact are the human/machine boundary~\cite{Lucius26}. A cautionary
+counterweight is on record: Ambrus's withdrawn de-computerization of Ball's plank
+theorem~\cite{Ambrus22} reminds the engine that removing a certificate fails at
+a measurable rate, which is why certificates are never replaced by prose without
+a full Congress cycle.
+
+\paragraph{Formalization.}
+Formalization is specified to run as a continuous pipeline: informal statement $\to$ \mirador{}
+IR $\to$ formal declaration $\to$ proof state $\to$ kernel feedback $\to$
+localized repair. Lean~4/\texttt{mathlib}~\cite{mathlib20} is the initial
+backend, but the architecture is backend-aware, not backend-identical.
+\begin{principle}[a kernel check is not a correspondence proof]\label{pr:correspond}
+That a formal declaration type-checks does \emph{not} establish that it encodes
+the intended informal theorem. Statement--formalization correspondence is an
+independent claim, audited by a dedicated Congress lens (\S\ref{sec:congress})
+and recorded in \mirador{} as \texttt{asserted}, never inferred from
+compilation.
+\end{principle}
+
+\section{The Congress: roles, powers, and adversarial lenses}\label{sec:congress}
+
+Agents are cheap; the architecture spends them on opposition. The original roles
+are preserved: \textbf{Strat\`ege} (expands the graph, maintains the
+\emph{plan de travail}), \textbf{Scribe} (attacks an \state{OPEN} node and
+drafts the proof), \textbf{Exp\'erimentateur} (exact-arithmetic experiments; a
+numeric grid is never a proof), \textbf{Biblioth\'ecaire} (deep literature
+research with adversarial source verification), \textbf{R\'efutateurs} (the
+panel proper), \textbf{Auditeur} (standing graph-level auditor), and
+\textbf{Greffier} (owns certificates, checkers, and the append-only record).
+
+\begin{principle}[epistemic separation of powers]\label{pr:sep}
+Generation, promotion, and certification are distinct authorities and are never
+vested in the same agent. The authority that generates a claim
+(\textbf{i})~does not promote it, (\textbf{ii})~does not choose its verdict,
+(\textbf{iii})~does not control the checker that verifies its computation, and
+(\textbf{iv})~does not contaminate the referee with the search transcript. This
+constrains \emph{who may exercise which power}, not merely how many agents
+participate.
+\end{principle}
+
+\begin{principle}[unanimity at the boundary]\label{pr:veto}
+Promotion to \state{PROMOTED} requires the Congress: any panelist can veto, and
+the veto is a \emph{structured object} --- target node/edge, concrete objection,
+affected dependency paths, and discharge condition --- returned to the Scribe as
+a work order, since the Scribe holds no promotion authority over its own node.
+\end{principle}
+
+The enlarged frontier of the two-plane engine demands new lenses beyond local
+correctness. The specified panel adds, as distinct fresh-context briefs not yet
+exercised (the pilot predates them): an
+\emph{informal--formal correspondence} auditor (Principle~\ref{pr:correspond});
+a \emph{novelty and priority} auditor (Principle~\ref{pr:novelty}); a
+\emph{retrieval-provenance} auditor (does the Evidence Bundle actually support
+what was drawn from it?); an \emph{assumption/scope} auditor (the $C$ versus
+$C^{111}$ lens); a \emph{checker-independence} auditor (no common-mode code
+between search and checker); and an \emph{integration and invalidation} auditor
+(does promotion trigger the correct downstream re-audits?).
+
+\begin{principle}[fresh-context independence, as a hypothesis]\label{pr:fresh}
+Write $P(\text{defect detected}\mid c)$ for the probability a review detects a
+genuine defect given the reviewer's epistemic context $c$. The engine's wager is
+$P(\text{detected}\mid\text{fresh}) > P(\text{detected}\mid\text{shared
+generation history})$, along a ladder of increasing independence (self-review;
+watched; single fresh-context; multi-lens panel). Whether climbing this ladder
+measurably improves verification is an empirical question the pilot motivates
+($n=1$) but cannot settle, and that \S\ref{sec:validation} proposes to measure.
+\end{principle}
+
+\section{Hierarchical research scheduling}\label{sec:scheduler}
+
+A flat frontier bandit over open nodes cannot run a years-long program. The
+scheduler is specified to be hierarchical, allocating a portfolio at three levels:
+(1)~\emph{tactical} proof obligations; (2)~\emph{research programs} lasting many
+cycles; and (3)~\emph{meta-program} decisions about representations and entire
+method families. At each level it balances exploitation, orthogonal exploration,
+counterexample search, formalization, certified computation, literature and
+priority research, \state{NO\_GO} attempts, reproduction, and minimum publishable
+milestones. Within a program, the classical index
+\[
+\text{priority}(v)=\frac{\widehat{P}(\text{close }v)\cdot\text{value}(v\to R)}
+{\text{cost}(v)}
+\]
+would rank tactical nodes, with $\widehat{P}$ updated in bandit
+fashion~\cite{Auer02,Browne12} and value flowing down from the root milestone
+$R$ through the AND--OR substructure.
+
+\begin{principle}[the score is not evidence]\label{pr:score}
+A scheduler priority is a resource-allocation heuristic, never evidence of truth.
+It may decide what to attempt next; it may never decide what is promoted.
+\end{principle}
+
+Three hard rules temper the index, unchanged from the predecessor: \emph{time
+boxing} (an exhausted attempt returns to the Strat\`ege with its transcript,
+never to the same Scribe for ``one more try''); the \emph{retreat rule} (after
+$N$ failures a node is re-entered only via a new reduction edge or a
+\state{NO\_GO} attempt --- a proved \otype{BARRIER} (a route reaching state
+\state{NO\_GO}) being a first-class asset that prunes infinite search); and
+\emph{milestone insurance} (the graph always contains a resourced path to a
+shippable \emph{fascicule}, so a campaign degrades gracefully).
+
+\section{Event-sourced knowledge and invalidation}\label{sec:substrate}
+
+A governance architecture is only as trustworthy as the record it governs. The
+substrate does not persist knowledge as prose.
+
+\begin{principle}[what memory holds]\label{pr:memory}
+The engine remembers \emph{epistemic state}, \emph{dependency},
+\emph{provenance}, and \emph{confidence} --- where confidence is the pair
+(state, review level). Prose and transcripts are attachments to that record,
+never the record itself.
+\end{principle}
+
+Four storage roles realize this, with a strict direction of authority; the core
+of the first three is what \mirador{} implements.
+\emph{(i)~The log is the source of truth.} An append-only sequence of campaign
+events (\texttt{proposed}, \texttt{evidence-added}, \texttt{promoted} recording
+review-independence level, \texttt{refuted}, \texttt{obligation-discharged},
+\texttt{certificate-registered}, \texttt{retired}); every other store is a
+derived, reconstructible view~\cite{Fowler05}, made tamper-evident by
+hash-chaining with periodic Merkle roots, the transparent-log pattern of
+certificate transparency~\cite{RFC6962,Cox19}. Rebuildability buys time travel
+and auditability of the promotion process itself --- the metrics of
+\S\ref{sec:validation} are computable precisely because each promotion event
+carries its review level.
+\emph{(ii)~The graph is a truth-maintained cache.} Typed edges, each carrying its
+soundness obligation; its defining operation is retraction propagation: when a
+node is refuted or a definition it rests on is revised, invalidation propagates
+through the upward transitive closure, demoting every affected \state{PROMOTED}
+node to \state{SUSPECT} with re-audit work orders. (The propagation primitive is
+implemented in \mirador{}; the end-to-end promotion loop that would act on the
+work orders is not.) \state{SUSPECT} is the only state entered automatically; the
+only exit is back through the Congress. This is
+the truth-maintenance tradition~\cite{Doyle79,deKleer86}; the closest working
+precedent is iCoq~\cite{Celik17}, which invalidates the upward closure of changed
+entities. \texttt{leanblueprint}~\cite{Massot,Tao23} propagates \emph{good} news
+up a dependency graph; the engine specifies the complementary propagation of
+\emph{bad} news as first-class epistemic demotion, distinct from iCoq's
+recheck-invalidation, which \texttt{mathlib} can forgo only because it lives in
+one always-consistent environment~\cite{vanDoorn20}.
+\emph{(iii)~The corpus is immutable and content-addressed.} \emph{Les
+\'El\'ements} holds only promoted objects, frozen at promotion; identity is the
+canonical hash of the statement-with-context (the \mirador{} identity rule),
+so that ``object named in the statement $\ne$ object manipulated in the proof''
+becomes a comparison of two hashes, and citations pin hashes in the manner of
+trusty URIs~\cite{Kuhn14,Kuhn16}. Provenance reuses PROV-DM
+vocabulary~\cite{PROVDM13}.
+\emph{(iv)~Heuristic memory has no authority.} Embeddings and traces are an index
+\emph{into} the graph; retrieval must resolve to a node and its epistemic state
+before use. The membrane is one-way: soft memory may propose an \state{OPEN}
+node, never assert a \state{PROMOTED} one --- the failure it prevents is a
+hallucinated recollection leaking into a proof. Recent agent-memory
+systems~\cite{Zep25,Yadav26} manage validity \emph{in time} (``no longer
+holds''), not epistemic refutation (``proved false''), and separate no authority
+between soft memory and a verified corpus; for the engine that separation is a
+requirement.
+
+The one binding physical requirement is transactional: a promotion commits its
+event, the state change, the corpus insertion, and the certificate registration
+atomically, or not at all. The separation of powers (Principle~\ref{pr:sep})
+is specified to materialize as database permissions --- the generating role
+would hold no write access to the corpus.
+
+\section{The Bang affine plank vertical slice}\label{sec:pilot}
+
+The pilot is a \emph{requirements-elicitation case study}, not an evaluation, and
+its encoding here is \emph{retrospective}: \mirador{}, \pc{}, and the Discovery
+Plane operators were \emph{not} implemented during the 2026 sixteen-round manual
+campaign on Bang's affine plank conjecture~\cite{Bang51,Ball91,BY26,Verreault26}.
+We show how the revised engine \emph{would} represent that campaign's documented
+events; we do not claim it ran them. With $n=1$ the campaign motivates the
+mechanisms and cannot measure them.
+
+The campaign's outputs were a 35-page manuscript~\cite{Lucius26} (a
+transport-defect framework with minimax duality; a characterization of witness
+measures for three directions on the triangle, occupying the gap left by
+Gardner~\cite{Gardner88}; a rigid two-parameter family of sharp coverings; a
+dimension-general facet defect; and the certified covering constant of
+\S\ref{sec:formal}), a verified state-of-the-art map~\cite{BY26,AKP19,GKP22,MOM26},
+and a ranked program of next attacks. The design-relevant data are the
+\emph{failures}, all caught before publication, none inside a proof, and each now
+owned by a specific mechanism and a specific typed transition.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.40\textwidth}p{0.24\textwidth}p{0.28\textwidth}@{}}
+\caption{Retrospective encoding of pilot events --- documented defects and key
+artifacts. Each maps to an object/edge in the typed hypergraph, an epistemic
+transition, and the owning mechanism.}\label{tab:pilot}\\
+\toprule
+\textbf{Pilot event (defect or key artifact)} & \textbf{Hypergraph
+locus} & \textbf{Mechanism / transition}\\ \midrule
+\endfirsthead
+\toprule
+\textbf{Pilot event} & \textbf{Hypergraph locus} & \textbf{Mechanism}\\ \midrule
+\endhead
+Object proved ($C^{111}$) $\ne$ object defined ($C$) & two \otype{DEFINITION}
+cells, distinct context-hashes & assumption/scope lens; constitution violation
+(\S\ref{sec:constitution})\\
+Invalid reduction edge (proved for $C^{111}$, stated for $C$) &
+\otype{REDUCTION} edge obligation & edge-level audit; $\to$\state{REFUTED} edge
+(\S\ref{sec:mirador})\\
+Circular termination argument & \otype{CLAIM} reachable from its own obligations
+& acyclicity audit; static-certificate template (\S\ref{sec:formal})\\
+Priority claim (``first non-concurrent triple'') falsified & \otype{CLAIM} vs
+\otype{COUNTEREXAMPLE} & novelty/priority lens (\S\ref{sec:congress})\\
+Six internal audits missed what one external pass caught & review-level metadata
+on the \texttt{promoted} events & fresh-context panels; \emph{la retraite}
+(Principle~\ref{pr:fresh})\\
+Sign-cell typo in a soundness lemma; degenerate-direction gap &
+\otype{CLAIM}/\otype{CHECKER} with a \dbend{} flag & multi-lens re-derivation;
+dangerous-bend discharge\\
+$812{,}651$-leaf certificate + independent checker & \otype{CERTIFICATE},
+\otype{CHECKER} cells & certificate discipline (Principle~\ref{pr:discard})\\
+Route obstructions (Bang sign argument; symplectic ceiling) & \otype{BARRIER}
+nodes (state \state{NO\_GO}) & retreat rule; barrier as asset
+(\S\ref{sec:scheduler})\\
+\bottomrule
+\end{longtable}
+}
+
+Conversely, what never failed --- $\sim$22 adversarially re-derived computations,
+massive exact-arithmetic cross-checks, the certificate/checker pair --- is
+exactly what had already been subjected to opposition and exact arithmetic. The
+working hypothesis --- \emph{errors concentrate where claims meet language, so
+that is where adversaries should be spent} --- is consistent with the one
+campaign on record but remains a hypothesis until the node-versus-edge error
+share of \S\ref{sec:validation} is measured across many.
+
+\section{Validation ladder and three-track program}\label{sec:validation}
+
+We replace any impression that the next step is ``solve a Millennium problem''
+with a gated readiness ladder. Each rung is a falsifiable claim about the system,
+and the engine cannot self-declare the top rungs.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.07\textwidth}p{0.85\textwidth}@{}}
+\caption{The readiness ladder. Current status is marked against
+Table~\ref{tab:maturity}: R0--R1 have prototype evidence; R2--R9 are
+open.}\label{tab:ladder}\\
+\toprule
+\textbf{Rung} & \textbf{Readiness criterion}\\ \midrule
+\endfirsthead
+\toprule \textbf{Rung} & \textbf{Readiness criterion}\\ \midrule \endhead
+R0 & \emph{Representation}: \mirador{} schemas, identity, and versioning operate
+on real claims. \textbf{(prototype)}\\
+R1 & \emph{Retrieval}: \pc{} rejects incompatible near-matches and reconstructs
+usable Evidence Bundles. \textbf{(prototype eval)}\\
+R2 & \emph{Governance}: events, permissions, promotion, veto, invalidation, and
+deterministic replay work end to end.\\
+R3 & \emph{Discovery}: the system regenerates nontrivial known results under
+contamination controls and records failed routes.\\
+R4 & \emph{Open-problem}: a genuinely new lemma, counterexample, reduction, or
+barrier on a bounded open problem.\\
+R5 & \emph{External}: at least one result survives independent expert or journal
+review.\\
+R6 & \emph{Millennium mapping}: a target-specific constitution and a verified
+state-of-the-art atlas are released.\\
+R7 & \emph{Millennium frontier}: a novel, externally reviewed result advances a
+recognized subproblem or proves a useful barrier.\\
+R8 & \emph{Candidate resolution}: a complete candidate proof/disproof with closed
+dependencies and formal/certified artifacts, externally reviewed.\\
+R9 & \emph{Community validation}: acceptance through the external mathematical
+process. \emph{The engine cannot promote itself to this state.}\\
+\bottomrule
+\end{longtable}
+}
+
+Three concurrent tracks feed the ladder. \textbf{Track~A (engineering and
+reconstruction)} uses the Bang campaign as the end-to-end integration
+laboratory. \textbf{Track~B (blind scientific evaluation)} uses problems supplied
+by external mathematicians --- withheld solutions or unpublished subproblems ---
+under contamination and information-access controls, which is the only honest way
+to measure discovery. \textbf{Track~C (Millennium preparation)} is initially
+restricted to constitution, literature atlas, formalized definitions, barriers,
+equivalences, certified computational frontiers, and ranked subproblems; it may
+advance to direct frontier research only after predetermined gates from Tracks~A
+and~B are passed.
+
+\paragraph{Metrics by plane.} The primary trust metric remains the \emph{False
+Theorem Promotion Rate} (FTPR): the fraction of \state{PROMOTED} promotions that
+are, in fact, wrong. It is never collapsed with discovery metrics into a single
+score. Because R2--R9 are open, no promotions exist yet and the FTPR is currently
+\emph{undefined}; its estimator is nonetheless specified --- seeded known-false
+claims, Track-B blind ground truth, and post-hoc external review supply the
+numerator over all \state{PROMOTED} events --- so it becomes measurable exactly
+when governance (R2) runs. Around it: (\emph{Discovery}) useful-candidate rate, time-to-counterexample,
+novel-result yield, program diversity, reduction depth, theory compression,
+barrier discovery, cross-campaign reuse; (\emph{Retrieval/representation})
+assumption-compatible retrieval precision, Evidence-Bundle completeness,
+definition/version accuracy, dependency-path recall, stale-claim serving rate,
+informal--formal alignment accuracy; (\emph{Trust}) FTPR, defect detection and
+escape rates, false-rejection rate, node-versus-edge error share, independent
+reproduction rate, formalization coverage, re-audit latency, and cost per
+correctly promoted claim. A system that solves more problems while raising its
+FTPR is, by this architecture's standard, worse.
+
+\section{The Millennium-scale stress test}\label{sec:millennium}
+
+A Millennium Prize Problem is the intended stress test at the top of the ladder,
+not a promised deliverable, and the title of this paper makes no such promise.
+Its role is to supply adversarial pressure no synthetic benchmark can, at a
+target where ``solution'' is defined entirely outside the engine
+(Principle~\ref{pr:solution}). Consistent with milestone insurance
+(\S\ref{sec:scheduler}), a Millennium campaign is structured so its floor ships
+regardless of the frontier: a verified state-of-the-art atlas and formalized
+definitions (R6) are a survey \emph{fascicule} that is valuable even if no new
+theorem is proved; a frontier result (R7) --- and a proved \otype{BARRIER}
+(state \state{NO\_GO}) is valued at parity with a positive result --- is the
+aspirational ceiling; and R8--R9 depend on an external process the engine cannot
+short-circuit. The ceiling is upside, never the plan.
+
+\section{Threats to validity and limitations}\label{sec:threats}
+
+The engine does not manufacture insight, novelty, tractability, or a Millennium
+resolution; a campaign is bounded by the best reduction any Strat\`ege proposes,
+and by representation bottlenecks, formalization cost, retrieval error, model
+homogenization, benchmark contamination, human-expert bottlenecks, and compute
+limits. Against known failure modes, we classify the architecture's response as
+\textbf{prevent}, \textbf{detect}, \textbf{record}, \textbf{mitigate}, or
+\textbf{open}.
+
+{\footnotesize
+\begin{longtable}{@{}p{0.42\textwidth}p{0.16\textwidth}p{0.34\textwidth}@{}}
+\caption{Threat model.}\label{tab:threats}\\
+\toprule
+\textbf{Threat} & \textbf{Response} & \textbf{Mechanism}\\ \midrule
+\endfirsthead
+\toprule \textbf{Threat} & \textbf{Response} & \textbf{Mechanism}\\ \midrule
+\endhead
+Hallucinated citations & detect & Biblioth\'ecaire source verification;
+retrieval-provenance lens\\
+False novelty / renaming & detect & novelty-and-priority lens
+(Principle~\ref{pr:novelty})\\
+Statement/definition/proof mismatch & prevent & context-hash identity;
+definition--proof audit\\
+Invalid transformation/reduction edge & detect & edge-level soundness obligation\\
+Formalizing a weaker statement & detect & correspondence audit
+(Principle~\ref{pr:correspond})\\
+Assumption/scope leakage & detect & assumption/scope lens; hard retrieval filters\\
+Stale retrieval & prevent & version-aware invalidation of indexes and bundles\\
+Corrupted graph edges & record & append-only log; deterministic replay\\
+Retrieval poisoning / prompt injection & mitigate & authority membrane; no
+promotion from soft memory\\
+Checker/searcher common-mode bug & detect & checker-independence lens; mutation
+tests\\
+Dependency cycles & prevent & acyclicity-of-justification audit\\
+Agent collusion / shared-context bias & mitigate & separation of powers;
+fresh-context panels\\
+Premature convergence to one program & mitigate & hierarchical portfolio;
+orthogonal-exploration budget\\
+Benchmark contamination & mitigate & Track~B blind problems; contamination
+controls\\
+Compute-driven publication bias & record & every promotion event logs its
+review level and cost\\
+Governance capture & open & the top of the ladder is external by construction\\
+\bottomrule
+\end{longtable}
+}
+
+The central limitation is evidential: two modules are implemented prototypes, one
+computation is certified, the governance and Congress are so far only manually
+exercised, and the discovery, formalization, and scheduling planes are specified,
+not built (Table~\ref{tab:maturity}). The immediate work is to climb R2--R4 under
+the three-track program and to test the fresh-context hypothesis
+(Principle~\ref{pr:fresh}) by varying reviewer independence.
+
+\section{Conclusion}\label{sec:conclusion}
+
+The transition this paper makes is deliberate: a claim-promotion architecture,
+preserved intact as the Trust Plane, becomes a governed \emph{discovery}
+architecture supported by an implemented representation (\mirador{}) and
+retrieval (\pc{}) substrate, and evaluated through readiness gates rather than
+assertion. The final position is meant to be ambitious but falsifiable.
+
+\begin{principle}[position]\label{pr:position}
+The \engine{} does not claim to manufacture a Millennium solution. It specifies
+and evaluates the institutional, representational, computational, and
+verification machinery required for autonomous mathematical research to
+accumulate frontier progress \emph{without epistemic collapse} --- the state in
+which cheap generation silently fills a corpus with load-bearing falsehoods.
+\end{principle}
+
+Its reusable asset is horizontal: governed goal graphs, adversarial promotion
+boundaries, certificate discipline, and dependency-driven invalidation are a
+verified-reasoning infrastructure applicable wherever claims are cheap to
+generate and expensive to trust. Each campaign is intended to calibrate the
+scheduler's priors and harden the audit checklists, so that --- if the effect
+holds --- the engine that finishes a milestone is better calibrated than the one
+that started it.
+
+\appendix
+\section{Internal language (normative glossary)}\label{app:language}
+
+Bourbaki's working culture survives in its documents, and the engine adopts its
+vocabulary because names carry norms. The glossary is normative for platform
+documents. \emph{Les \'El\'ements}: the corpus of \state{PROMOTED} nodes with
+their proofs and certificates, the only citable ground truth. \emph{Fascicule}:
+a shippable closed milestone, the publication quantum. \emph{La Tribu}: the
+append-only campaign log, the single source of truth of which graph, corpus, and
+indexes are derived views. \emph{Le Congr\`es}: the refutation panel of
+\S\ref{sec:congress}. \emph{Le veto}: a structured block on promotion; unanimity
+is required at the \state{PROMOTED} boundary. \emph{Tournant dangereux}
+(\dbend): a standing flag on nodes or edges with subtle traps --- degenerate
+cases, definition drift, normalization choices --- that a panel must explicitly
+discharge. \emph{La retraite \`a 50}: mandatory agent retirement --- a context
+that has worked a node for $N$ rounds is retired and replaced by a fresh one that
+re-derives before extending, institutionalizing fresh eyes. \emph{Le cobaye}: a
+deliberately naive agent given a draft cold, to test self-containedness before
+the Congress. \emph{Abus de langage}: sanctioned informal shorthand, legal only
+when hyperlinked to the rigorous statement it abbreviates. \emph{Plan de
+travail}: the Strat\`ege's prioritized frontier snapshot, the only to-do list.
+
+\section{Object types and epistemic states}\label{app:states}
+
+Object type answers ``what is this node?'' and is fixed at creation:
+\otype{DEFINITION}, \otype{QUESTION}, \otype{CONJECTURE}, \otype{CLAIM},
+\otype{REDUCTION}, \otype{EQUIVALENCE}, \otype{EXAMPLE}, \otype{COUNTEREXAMPLE},
+\otype{BARRIER}, \otype{EXPERIMENT}, \otype{CERTIFICATE}, \otype{CHECKER},
+\otype{HEURISTIC}, \otype{TRANSLATION}, \otype{PROGRAM}. Epistemic state answers
+``how far has it survived?'' and changes only through logged events:
+\state{DRAFT} $\to$ \state{OPEN} $\to$ \state{EVIDENCE}/\state{CANDIDATE} $\to$
+\state{FORMALIZED} $\to$ \state{AUDITED} $\to$ \state{PROMOTED}, with
+\state{REFUTED} and \state{NO\_GO} as terminal-for-a-route outcomes,
+\state{SUSPECT} as the only automatically entered state (via invalidation), and
+\state{RETIRED} for superseded versions (assigned as part of the promoting event
+that mints the new version, not by automatic demotion). The two axes are
+independent: a
+\otype{CONJECTURE} may be \state{PROMOTED} (as a conjecture, with that status),
+and a \otype{CLAIM} labelled ``Theorem'' may sit at \state{DRAFT}
+indefinitely (Principle~\ref{pr:orthogonal}).
+
+\begin{thebibliography}{99}
+\itemsep2pt
+
+\bibitem{Hilbert1900} D.~Hilbert, \emph{Mathematische Probleme}, Nachr. Ges.
+Wiss. G\"ottingen, Math.-Phys. Kl. (1900), 253--297.
+
+\bibitem{Polya45} G.~P\'olya, \emph{How to Solve It}, Princeton University
+Press, 1945.
+
+\bibitem{Lakatos76} I.~Lakatos, \emph{Proofs and Refutations}, Cambridge
+University Press, 1976.
+
+\bibitem{Bourbaki} N.~Bourbaki, \emph{\'El\'ements de math\'ematique}, Hermann
+(later Masson, Springer), Paris, 1939--.
+
+\bibitem{Mashaal06} M.~Mashaal, \emph{Bourbaki: A Secret Society of
+Mathematicians}, American Mathematical Society, 2006.
+
+\bibitem{Corry92} L.~Corry, \emph{Nicolas Bourbaki and the concept of
+mathematical structure}, Synthese \textbf{92} (1992), 315--348.
+
+\bibitem{Weil92} A.~Weil, \emph{The Apprenticeship of a Mathematician},
+Birkh\"auser, 1992.
+
+\bibitem{Beaulieu93} L.~Beaulieu, \emph{A Parisian caf\'e and ten proto-Bourbaki
+meetings (1934--1935)}, Math. Intelligencer \textbf{15} (1993), no.~1, 27--35.
+
+\bibitem{NewellSimon57} A.~Newell, J.~C.~Shaw, H.~A.~Simon, \emph{Empirical
+explorations of the Logic Theory Machine}, Proc. Western Joint Computer
+Conference (1957), 218--230.
+
+\bibitem{Nilsson71} N.~J.~Nilsson, \emph{Problem-Solving Methods in Artificial
+Intelligence}, McGraw-Hill, 1971.
+
+\bibitem{Bundy88} A.~Bundy, \emph{The use of explicit plans to guide inductive
+proofs}, Proc. CADE-9, LNCS \textbf{310}, Springer (1988), 111--120.
+
+\bibitem{McCune97} W.~McCune, \emph{Solution of the Robbins problem}, J.
+Automated Reasoning \textbf{19} (1997), 263--276.
+
+\bibitem{AppelHaken77} K.~Appel, W.~Haken, \emph{Every planar map is four
+colorable. Part I: Discharging}, Illinois J. Math. \textbf{21} (1977), 429--490.
+
+\bibitem{Gonthier08} G.~Gonthier, \emph{Formal proof---the four-color theorem},
+Notices Amer. Math. Soc. \textbf{55} (2008), 1382--1393.
+
+\bibitem{Hales17} T.~Hales et al., \emph{A formal proof of the Kepler
+conjecture}, Forum of Mathematics, Pi \textbf{5} (2017), e2.
+
+\bibitem{Heule16} M.~J.~H.~Heule, O.~Kullmann, V.~W.~Marek, \emph{Solving and
+verifying the Boolean Pythagorean triples problem via cube-and-conquer}, Proc.
+SAT 2016, LNCS \textbf{9710}, Springer (2016), 228--245.
+
+\bibitem{mathlib20} The mathlib Community, \emph{The Lean mathematical library},
+Proc. 9th ACM SIGPLAN Conf. Certified Programs and Proofs (CPP 2020), 367--381.
+
+\bibitem{deBruijn70} N.~G.~de Bruijn, \emph{The mathematical language AUTOMATH},
+Symposium on Automatic Demonstration, LNM \textbf{125}, Springer (1970), 29--61.
+
+\bibitem{GowersNielsen09} T.~Gowers, M.~Nielsen, \emph{Massively collaborative
+mathematics}, Nature \textbf{461} (2009), 879--881.
+
+\bibitem{Polymath12} D.~H.~J.~Polymath, \emph{A new proof of the density
+Hales--Jewett theorem}, Ann. of Math. \textbf{175} (2012), 1283--1327.
+
+\bibitem{Yao23} S.~Yao et al., \emph{Tree of Thoughts: deliberate problem
+solving with large language models}, NeurIPS 36 (2023).
+
+\bibitem{Trinh24} T.~H.~Trinh, Y.~Wu, Q.~V.~Le, H.~He, T.~Luong, \emph{Solving
+olympiad geometry without human demonstrations}, Nature \textbf{625} (2024),
+476--482.
+
+\bibitem{RomeraParedes24} B.~Romera-Paredes et al., \emph{Mathematical
+discoveries from program search with large language models}, Nature \textbf{625}
+(2024), 468--475.
+
+\bibitem{Davies21} A.~Davies et al., \emph{Advancing mathematics by guiding
+human intuition with AI}, Nature \textbf{600} (2021), 70--74.
+
+\bibitem{Aletheia26} T.~Feng, T.~H.~Trinh, G.~Bingham, et al.\ (Google
+DeepMind), \emph{Towards Autonomous Mathematics Research} (the Aletheia
+system), arXiv:2602.10177 (2026).
+
+\bibitem{QED26} C.~An, Q.~Ye, M.~Pan, J.~Zhang, \emph{QED: an open-source
+multi-agent system for generating mathematical proofs on open problems},
+arXiv:2604.24021 (2026).
+
+\bibitem{RMA26} Z.~Zhao, B.~Yuan, J.~Choi, Y.~Chen, \emph{RMA: an agentic system
+for research-level mathematical problems}, arXiv:2605.22875 (2026).
+
+\bibitem{ProverAgent25} Baba, Liu, Kurita, Sannai, \emph{Prover Agent: an
+agent-based framework for formal mathematical proofs}, arXiv:2506.19923 (2025).
+
+\bibitem{LEAP26} Kung, Song, Hwang, et~al., \emph{LEAP: supercharging LLMs for
+formal mathematics with agentic frameworks}, arXiv:2606.03303 (2026).
+
+\bibitem{LeanSearch26} Gao, Sun, Jiang, et~al., \emph{LeanSearch v2: global
+premise retrieval for Lean~4 theorem proving}, arXiv:2605.13137 (2026).
+
+\bibitem{AlphaEvolve25} Novikov, Balog, et~al.\ (Google DeepMind),
+\emph{AlphaEvolve: a coding agent for scientific and algorithmic discovery},
+Google DeepMind technical report (2025),
+\texttt{deepmind.google/discover/blog/alphaevolve}.
+
+\bibitem{Doyle79} J.~Doyle, \emph{A truth maintenance system}, Artificial
+Intelligence \textbf{12} (1979), no.~3, 231--272.
+
+\bibitem{deKleer86} J.~de~Kleer, \emph{An assumption-based TMS}, Artificial
+Intelligence \textbf{28} (1986), 127--162.
+
+\bibitem{Celik17} A.~Celik, K.~Palmskog, M.~Gligoric, \emph{iCoq: regression
+proof selection for large-scale verification projects}, Proc. ASE 2017.
+
+\bibitem{Massot} P.~Massot, \emph{leanblueprint: a plasTeX plugin for writing
+formalization blueprints for Lean~4 projects}, software.
+
+\bibitem{Tao23} T.~Tao, \emph{Formalizing the proof of PFR in Lean4 using
+Blueprint: a short tour}, blog post, November 2023.
+
+\bibitem{vanDoorn20} F.~van~Doorn, G.~Ebner, R.~Y.~Lewis, \emph{Maintaining a
+library of formal mathematics}, Proc. CICM 2020, LNCS \textbf{12236}, Springer
+(2020); arXiv:2004.03673.
+
+\bibitem{TheoremGraph26} S.~Kurgan, E.~Wang, E.~Leonen, et al., \emph{TheoremGraph:
+bridging formal and informal mathematics}, arXiv:2606.25363 (2026).
+
+\bibitem{MaRDI23} M.~Schubotz, E.~Ferrer, J.~Stegm\"uller, et al., \emph{Bravo
+MaRDI: a Wikibase powered knowledge graph on mathematics}, arXiv:2309.11484
+(2023).
+
+\bibitem{PROVDM13} L.~Moreau, P.~Missier (eds.), \emph{PROV-DM: the PROV data
+model}, W3C Recommendation, 30 April 2013.
+
+\bibitem{Kuhn14} T.~Kuhn, M.~Dumontier, \emph{Trusty URIs: verifiable,
+immutable, and permanent digital artifacts for linked data}, Proc. ESWC 2014,
+LNCS \textbf{8465}, Springer (2014), 395--410.
+
+\bibitem{Kuhn16} T.~Kuhn et al., \emph{Decentralized provenance-aware publishing
+with nanopublications}, PeerJ Computer Science \textbf{2} (2016), e78.
+
+\bibitem{RFC6962} B.~Laurie, A.~Langley, E.~Kasper, \emph{Certificate
+transparency}, RFC 6962, IETF, 2013.
+
+\bibitem{Cox19} R.~Cox, \emph{Transparent logs for skeptical clients},
+\texttt{research.swtch.com/tlog}, 2019.
+
+\bibitem{Fowler05} M.~Fowler, \emph{Event sourcing}, \texttt{martinfowler.com},
+2005.
+
+\bibitem{Zep25} P.~Rasmussen, P.~Paliychuk, T.~Beauvais, J.~Ryan, D.~Chalef,
+\emph{Zep: a temporal knowledge graph architecture for agent memory},
+arXiv:2501.13956 (2025).
+
+\bibitem{Yadav26} N.~Yadav, \emph{Temporal validity in retrieval memory},
+arXiv:2606.26511 (2026).
+
+\bibitem{Auer02} P.~Auer, N.~Cesa-Bianchi, P.~Fischer, \emph{Finite-time
+analysis of the multiarmed bandit problem}, Machine Learning \textbf{47} (2002),
+235--256.
+
+\bibitem{Browne12} C.~Browne et al., \emph{A survey of Monte Carlo tree search
+methods}, IEEE Trans. Comput. Intell. AI in Games \textbf{4} (2012), 1--43.
+
+\bibitem{Bang51} T.~Bang, \emph{A solution of the ``plank problem''}, Proc.
+Amer. Math. Soc. \textbf{2} (1951), 990--993.
+
+\bibitem{Ball91} K.~Ball, \emph{The plank problem for symmetric bodies}, Invent.
+Math. \textbf{104} (1991), 535--543.
+
+\bibitem{Gardner88} R.~J.~Gardner, \emph{Relative width measures and the plank
+problem}, Pacific J. Math. \textbf{135} (1988), 299--312.
+
+\bibitem{AKP19} A.~Akopyan, R.~Karasev, F.~Petrov, \emph{Bang's problem and
+symplectic invariants}, J. Symplectic Geom. \textbf{17} (2019), no.~6,
+1579--1611.
+
+\bibitem{GKP22} A.~Glazyrin, R.~Karasev, A.~Polyanskii, \emph{Covering by planks
+and avoiding zeros of polynomials}, Int. Math. Res. Not. IMRN (2023);
+arXiv:2112.05382.
+
+\bibitem{Ambrus22} G.~Ambrus, \emph{A short proof of the plank theorem for
+symmetric bodies}, arXiv:2203.11260 (2022); withdrawn by the author.
+
+\bibitem{Verreault26} W.~Verreault, \emph{Plank theorems and their applications:
+a survey}, Bull. London Math. Soc. (2026); arXiv:2203.05540.
+
+\bibitem{BY26} A.~Bakaev, A.~Yehudayoff, \emph{A lower bound for the total
+relative width of planks covering a convex body}, arXiv:2602.20290 (2026).
+
+\bibitem{MOM26} A.~D.~Mart\'inez, O.~Ortega-Moreno, \emph{A solution to the
+strong polarization problem}, arXiv:2605.28744 (2026).
+
+\bibitem{Lucius26} M.~Lucius, \emph{Transport and tiling bounds for the affine
+plank problem on the triangle}, manuscript (2026), 35 pp.; repository
+\texttt{maximilianolucius/bang-plank-affine-triangle}.
+
+\bibitem{lucius2026mirador} M.~Lucius, \emph{MIRADOR: a typed, versioned
+intermediate representation for auditable mathematical knowledge and discovery},
+software and preprint (2026), Zenodo \texttt{10.5281/zenodo.21324524};
+repository \texttt{maximilianolucius/mirador}.
+
+\bibitem{lucius2026proofcontext} M.~Lucius, \emph{ProofContext: dependency-aware
+retrieval of verifiable context for mathematical reasoning}, software and
+preprint (2026), Zenodo \texttt{10.5281/zenodo.21325288}; repository
+\texttt{maximilianolucius/proofcontext}.
+
+\end{thebibliography}
+
+\end{document}

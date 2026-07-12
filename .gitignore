@@ -1,0 +1,26 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.synctex.gz
+build*.log
+
+# backups / intermediates
+*.bak
+arxiv-submission/
+
+# internal planning, prompts, and funding/strategy — NOT for publication
+01_REORIENTACION_BOURBAKI_ENGINE_MILLENNIUM.md
+02_PROMPT_CLAUDE_FABLE_REORIENTACION.md
+07_PROMPT_CLAUDE_ADECUAR_BOURBAKI_ENGINE_DISCOVERY_ARXIV.md
+funding-research-2026-07.md
+aimath-seed-grant-draft.md
+README_REPRODUCE.md
+
+# secrets
+.ztok
+*.token
