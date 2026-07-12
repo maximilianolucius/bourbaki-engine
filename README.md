@@ -1,5 +1,8 @@
 # The Bourbaki Engine
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21328015.svg)](https://doi.org/10.5281/zenodo.21328015)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **A Governed Discovery Architecture for Long-Horizon Autonomous Mathematics.**
 
 An architecture and research-program paper: how autonomous systems can generate,
